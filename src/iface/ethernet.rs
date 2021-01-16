@@ -1025,18 +1025,12 @@ impl<'b, 'c, 'e> InterfaceInner<'b, 'c, 'e> {
         match address {
             #[cfg(feature = "proto-ipv4")]
             IpAddress::Ipv4(addr) => {
-                let own_cidr = self.ip_addrs.iter()
-                .filter_map(|cidr| match cidr {
-                    IpCidr::Ipv4(ipv4) => Some(ipv4),
-                    _ => None,
-                }).next();
-
-                if let Some(broadcast) = own_cidr.map_or(None, |c| c.broadcast()) {
-                    if addr == broadcast {
-                        return true
-                    }
-                }
-                false
+                self.ip_addrs.iter()
+                    .filter_map(|own_cidr| match own_cidr {
+                        IpCidr::Ipv4(own_ip) => Some(own_ip.broadcast()?),
+                        _ => None
+                    })
+                    .any(|broadcast_address| addr == broadcast_address)
             },
             _ => false
         }
