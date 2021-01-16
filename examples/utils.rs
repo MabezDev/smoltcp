@@ -9,7 +9,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use std::env;
 use std::process;
 #[cfg(feature = "log")]
-use log::{Level, LevelFilter};
+use log::{Level, LevelFilter, trace};
 #[cfg(feature = "log")]
 use env_logger::Builder;
 use getopts::{Options, Matches};
@@ -42,7 +42,7 @@ pub fn setup_logging_with_clock<F>(filter: &str, since_startup: F)
         })
         .filter(None, LevelFilter::Trace)
         .parse(filter)
-        .parse(&env::var("RUST_LOG").unwrap_or("".to_owned()))
+        .parse(&env::var("RUST_LOG").unwrap_or_else(|_| "".to_owned()))
         .init();
 }
 
@@ -68,7 +68,7 @@ pub fn parse_options(options: &Options, free: Vec<&str>) -> Matches {
         Ok(matches) => {
             if matches.opt_present("h") || matches.free.len() != free.len() {
                 let brief = format!("Usage: {} [OPTION]... {}",
-                                    env::args().nth(0).unwrap(), free.join(" "));
+                                    env::args().next().unwrap(), free.join(" "));
                 print!("{}", options.usage(&brief));
                 process::exit(if matches.free.len() != free.len() { 1 } else { 0 })
             }

@@ -1,5 +1,4 @@
-#![cfg_attr(feature = "alloc", feature(alloc))]
-#![no_std]
+#![cfg_attr(not(any(test, feature = "std")), no_std)]
 #![deny(unsafe_code)]
 #![cfg_attr(all(any(feature = "proto-ipv4", feature = "proto-ipv6"), feature = "ethernet"), deny(unused))]
 
@@ -89,23 +88,16 @@
 compile_error!("at least one socket needs to be enabled"); */
 
 // FIXME(dlrobertson): clippy fails with this lint
-#![cfg_attr(feature = "cargo-clippy", allow(if_same_then_else))]
+#![allow(clippy::if_same_then_else)]
+#![allow(clippy::manual_non_exhaustive)]
+#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::redundant_field_names)]
+#![allow(clippy::identity_op)]
+#![allow(clippy::option_map_unit_fn)]
+#![allow(clippy::unit_arg)]
 
-#[cfg(all(feature = "proto-ipv6", feature = "ethernet"))]
-#[macro_use]
-extern crate bitflags;
-extern crate byteorder;
-extern crate managed;
-#[cfg(any(test, feature = "std"))]
-#[macro_use]
-extern crate std;
-#[cfg(any(feature = "phy-raw_socket", feature = "phy-tap_interface"))]
-extern crate libc;
 #[cfg(feature = "alloc")]
 extern crate alloc;
-#[cfg(feature = "log")]
-#[macro_use(trace, debug)]
-extern crate log;
 
 use core::fmt;
 
@@ -124,6 +116,7 @@ pub mod dhcp;
 
 /// The error type for the networking stack.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum Error {
     /// An operation cannot proceed because a buffer is empty or full.
     Exhausted,
@@ -156,9 +149,6 @@ pub enum Error {
     /// An incoming packet was recognized but contradicted internal state.
     /// E.g. a TCP packet addressed to a socket that doesn't exist.
     Dropped,
-
-    #[doc(hidden)]
-    __Nonexhaustive
 }
 
 /// The result type for the networking stack.
@@ -166,18 +156,17 @@ pub type Result<T> = core::result::Result<T, Error>;
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &Error::Exhausted     => write!(f, "buffer space exhausted"),
-            &Error::Illegal       => write!(f, "illegal operation"),
-            &Error::Unaddressable => write!(f, "unaddressable destination"),
-            &Error::Finished      => write!(f, "operation finished"),
-            &Error::Truncated     => write!(f, "truncated packet"),
-            &Error::Checksum      => write!(f, "checksum error"),
-            &Error::Unrecognized  => write!(f, "unrecognized packet"),
-            &Error::Fragmented    => write!(f, "fragmented packet"),
-            &Error::Malformed     => write!(f, "malformed packet"),
-            &Error::Dropped       => write!(f, "dropped by socket"),
-            &Error::__Nonexhaustive => unreachable!()
+        match *self {
+            Error::Exhausted     => write!(f, "buffer space exhausted"),
+            Error::Illegal       => write!(f, "illegal operation"),
+            Error::Unaddressable => write!(f, "unaddressable destination"),
+            Error::Finished      => write!(f, "operation finished"),
+            Error::Truncated     => write!(f, "truncated packet"),
+            Error::Checksum      => write!(f, "checksum error"),
+            Error::Unrecognized  => write!(f, "unrecognized packet"),
+            Error::Fragmented    => write!(f, "fragmented packet"),
+            Error::Malformed     => write!(f, "malformed packet"),
+            Error::Dropped       => write!(f, "dropped by socket"),
         }
     }
 }

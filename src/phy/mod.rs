@@ -84,8 +84,8 @@ impl<'a> phy::TxToken for StmPhyTxToken<'a> {
 ```
 */
 
-use Result;
-use time::Instant;
+use crate::Result;
+use crate::time::Instant;
 
 #[cfg(all(any(feature = "phy-raw_socket", feature = "phy-tap_interface"), unix))]
 mod sys;
@@ -217,7 +217,7 @@ pub struct DeviceCapabilities {
 
     /// Only present to prevent people from trying to initialize every field of DeviceLimits,
     /// which would not let us add new fields in the future.
-    dummy: ()
+    pub(crate) dummy: ()
 }
 
 /// An interface for sending and receiving raw network frames.

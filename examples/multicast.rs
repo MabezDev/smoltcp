@@ -1,14 +1,9 @@
-#[macro_use]
-extern crate log;
-extern crate env_logger;
-extern crate getopts;
-extern crate smoltcp;
-extern crate byteorder;
-
 mod utils;
 
 use std::collections::BTreeMap;
 use std::os::unix::io::AsRawFd;
+use log::debug;
+
 use smoltcp::phy::wait as phy_wait;
 use smoltcp::wire::{EthernetAddress, IpVersion, IpProtocol, IpAddress, IpCidr, Ipv4Address,
                     Ipv4Packet, IgmpPacket, IgmpRepr};
@@ -88,7 +83,7 @@ fn main() {
                 // For display purposes only - normally we wouldn't process incoming IGMP packets
                 // in the application layer
                 socket.recv()
-                    .and_then(|payload| Ipv4Packet::new_checked(payload))
+                    .and_then(Ipv4Packet::new_checked)
                     .and_then(|ipv4_packet| IgmpPacket::new_checked(ipv4_packet.payload()))
                     .and_then(|igmp_packet| IgmpRepr::parse(&igmp_packet))
                     .map(|igmp_repr| println!("IGMP packet: {:?}", igmp_repr))

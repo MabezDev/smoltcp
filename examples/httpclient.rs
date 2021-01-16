@@ -1,17 +1,11 @@
-#[macro_use]
-extern crate log;
-extern crate env_logger;
-extern crate getopts;
-extern crate rand;
-extern crate url;
-extern crate smoltcp;
-
 mod utils;
 
 use std::str::{self, FromStr};
 use std::collections::BTreeMap;
 use std::os::unix::io::AsRawFd;
 use url::Url;
+use log::debug;
+
 use smoltcp::phy::wait as phy_wait;
 use smoltcp::wire::{EthernetAddress, Ipv4Address, Ipv6Address, IpAddress, IpCidr};
 use smoltcp::iface::{NeighborCache, EthernetInterfaceBuilder, Routes};
@@ -61,7 +55,7 @@ fn main() {
     let mut sockets = SocketSet::new(vec![]);
     let tcp_handle = sockets.add(tcp_socket);
 
-    enum State { Connect, Request, Response };
+    enum State { Connect, Request, Response }
     let mut state = State::Connect;
 
     loop {

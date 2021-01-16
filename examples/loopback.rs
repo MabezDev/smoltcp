@@ -1,21 +1,14 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(unused_mut)]
-
-#[cfg(feature = "std")]
-use std as core;
-#[macro_use]
-extern crate log;
-extern crate smoltcp;
-#[cfg(feature = "std")]
-extern crate env_logger;
-#[cfg(feature = "std")]
-extern crate getopts;
+#![allow(clippy::collapsible_if)]
 
 #[cfg(feature = "std")]
 #[allow(dead_code)]
 mod utils;
 
 use core::str;
+use log::{info, debug, error};
+
 use smoltcp::phy::Loopback;
 use smoltcp::wire::{EthernetAddress, IpAddress, IpCidr};
 use smoltcp::iface::{NeighborCache, EthernetInterfaceBuilder};
@@ -83,9 +76,7 @@ fn main() {
         utils::add_middleware_options(&mut opts, &mut free);
 
         let mut matches = utils::parse_options(&opts, free);
-        let device = utils::parse_middleware_options(&mut matches, device, /*loopback=*/true);
-
-        device
+        utils::parse_middleware_options(&mut matches, device, /*loopback=*/true)
     };
 
     let mut neighbor_cache_entries = [None; 8];

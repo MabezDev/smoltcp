@@ -1,10 +1,10 @@
 use core::{cmp, fmt};
 use byteorder::{ByteOrder, NetworkEndian};
 
-use {Error, Result};
-use phy::ChecksumCapabilities;
-use super::ip::checksum;
-use super::{Ipv4Packet, Ipv4Repr};
+use crate::{Error, Result};
+use crate::phy::ChecksumCapabilities;
+use crate::wire::ip::checksum;
+use crate::wire::{Ipv4Packet, Ipv4Repr};
 
 enum_with_unknown! {
     /// Internet protocol control message type.
@@ -34,18 +34,18 @@ enum_with_unknown! {
 
 impl fmt::Display for Message {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &Message::EchoReply      => write!(f, "echo reply"),
-            &Message::DstUnreachable => write!(f, "destination unreachable"),
-            &Message::Redirect       => write!(f, "message redirect"),
-            &Message::EchoRequest    => write!(f, "echo request"),
-            &Message::RouterAdvert   => write!(f, "router advertisement"),
-            &Message::RouterSolicit  => write!(f, "router solicitation"),
-            &Message::TimeExceeded   => write!(f, "time exceeded"),
-            &Message::ParamProblem   => write!(f, "parameter problem"),
-            &Message::Timestamp      => write!(f, "timestamp"),
-            &Message::TimestampReply => write!(f, "timestamp reply"),
-            &Message::Unknown(id) => write!(f, "{}", id)
+        match *self {
+            Message::EchoReply      => write!(f, "echo reply"),
+            Message::DstUnreachable => write!(f, "destination unreachable"),
+            Message::Redirect       => write!(f, "message redirect"),
+            Message::EchoRequest    => write!(f, "echo request"),
+            Message::RouterAdvert   => write!(f, "router advertisement"),
+            Message::RouterSolicit  => write!(f, "router solicitation"),
+            Message::TimeExceeded   => write!(f, "time exceeded"),
+            Message::ParamProblem   => write!(f, "parameter problem"),
+            Message::Timestamp      => write!(f, "timestamp"),
+            Message::TimestampReply => write!(f, "timestamp reply"),
+            Message::Unknown(id) => write!(f, "{}", id)
         }
     }
 }
@@ -90,40 +90,40 @@ enum_with_unknown! {
 
 impl fmt::Display for DstUnreachable {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &DstUnreachable::NetUnreachable =>
-                write!(f, "destination network unreachable"),
-            &DstUnreachable::HostUnreachable =>
-                write!(f, "destination host unreachable"),
-            &DstUnreachable::ProtoUnreachable =>
-                write!(f, "destination protocol unreachable"),
-            &DstUnreachable::PortUnreachable =>
-                write!(f, "destination port unreachable"),
-            &DstUnreachable::FragRequired =>
-                write!(f, "fragmentation required, and DF flag set"),
-            &DstUnreachable::SrcRouteFailed =>
-                write!(f, "source route failed"),
-            &DstUnreachable::DstNetUnknown =>
-                write!(f, "destination network unknown"),
-            &DstUnreachable::DstHostUnknown =>
-                write!(f, "destination host unknown"),
-            &DstUnreachable::SrcHostIsolated =>
-                write!(f, "source host isolated"),
-            &DstUnreachable::NetProhibited =>
-                write!(f, "network administratively prohibited"),
-            &DstUnreachable::HostProhibited =>
-                write!(f, "host administratively prohibited"),
-            &DstUnreachable::NetUnreachToS =>
-                write!(f, "network unreachable for ToS"),
-            &DstUnreachable::HostUnreachToS =>
-                write!(f, "host unreachable for ToS"),
-            &DstUnreachable::CommProhibited =>
-                write!(f, "communication administratively prohibited"),
-            &DstUnreachable::HostPrecedViol =>
-                write!(f, "host precedence violation"),
-            &DstUnreachable::PrecedCutoff =>
-                write!(f, "precedence cutoff in effect"),
-            &DstUnreachable::Unknown(id) =>
+        match *self {
+            DstUnreachable::NetUnreachable =>
+               write!(f, "destination network unreachable"),
+            DstUnreachable::HostUnreachable =>
+               write!(f, "destination host unreachable"),
+            DstUnreachable::ProtoUnreachable =>
+               write!(f, "destination protocol unreachable"),
+            DstUnreachable::PortUnreachable =>
+               write!(f, "destination port unreachable"),
+            DstUnreachable::FragRequired =>
+               write!(f, "fragmentation required, and DF flag set"),
+            DstUnreachable::SrcRouteFailed =>
+               write!(f, "source route failed"),
+            DstUnreachable::DstNetUnknown =>
+               write!(f, "destination network unknown"),
+            DstUnreachable::DstHostUnknown =>
+               write!(f, "destination host unknown"),
+            DstUnreachable::SrcHostIsolated =>
+               write!(f, "source host isolated"),
+            DstUnreachable::NetProhibited =>
+               write!(f, "network administratively prohibited"),
+            DstUnreachable::HostProhibited =>
+               write!(f, "host administratively prohibited"),
+            DstUnreachable::NetUnreachToS =>
+               write!(f, "network unreachable for ToS"),
+            DstUnreachable::HostUnreachToS =>
+               write!(f, "host unreachable for ToS"),
+            DstUnreachable::CommProhibited =>
+               write!(f, "communication administratively prohibited"),
+            DstUnreachable::HostPrecedViol =>
+               write!(f, "host precedence violation"),
+            DstUnreachable::PrecedCutoff =>
+               write!(f, "precedence cutoff in effect"),
+            DstUnreachable::Unknown(id) =>
                 write!(f, "{}", id)
         }
     }
@@ -172,7 +172,7 @@ pub struct Packet<T: AsRef<[u8]>> {
 }
 
 mod field {
-    use wire::field::*;
+    use crate::wire::field::*;
 
     pub const TYPE:       usize = 0;
     pub const CODE:       usize = 1;
@@ -366,6 +366,7 @@ impl<T: AsRef<[u8]>> AsRef<[u8]> for Packet<T> {
 
 /// A high-level representation of an Internet Control Message Protocol version 4 packet header.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[non_exhaustive]
 pub enum Repr<'a> {
     EchoRequest {
         ident:  u16,
@@ -382,8 +383,6 @@ pub enum Repr<'a> {
         header: Ipv4Repr,
         data:   &'a [u8]
     },
-    #[doc(hidden)]
-    __Nonexhaustive
 }
 
 impl<'a> Repr<'a> {
@@ -446,7 +445,6 @@ impl<'a> Repr<'a> {
             &Repr::DstUnreachable { header, data, .. } => {
                 field::UNUSED.end + header.buffer_len() + data.len()
             }
-            &Repr::__Nonexhaustive => unreachable!()
         }
     }
 
@@ -455,8 +453,8 @@ impl<'a> Repr<'a> {
     pub fn emit<T>(&self, packet: &mut Packet<&mut T>, checksum_caps: &ChecksumCapabilities)
             where T: AsRef<[u8]> + AsMut<[u8]> + ?Sized {
         packet.set_msg_code(0);
-        match self {
-            &Repr::EchoRequest { ident, seq_no, data } => {
+        match *self {
+            Repr::EchoRequest { ident, seq_no, data } => {
                 packet.set_msg_type(Message::EchoRequest);
                 packet.set_msg_code(0);
                 packet.set_echo_ident(ident);
@@ -465,7 +463,7 @@ impl<'a> Repr<'a> {
                 packet.data_mut()[..data_len].copy_from_slice(&data[..data_len])
             },
 
-            &Repr::EchoReply { ident, seq_no, data } => {
+            Repr::EchoReply { ident, seq_no, data } => {
                 packet.set_msg_type(Message::EchoReply);
                 packet.set_msg_code(0);
                 packet.set_echo_ident(ident);
@@ -474,7 +472,7 @@ impl<'a> Repr<'a> {
                 packet.data_mut()[..data_len].copy_from_slice(&data[..data_len])
             },
 
-            &Repr::DstUnreachable { reason, header, data } => {
+            Repr::DstUnreachable { reason, header, data } => {
                 packet.set_msg_type(Message::DstUnreachable);
                 packet.set_msg_code(reason.into());
 
@@ -483,8 +481,6 @@ impl<'a> Repr<'a> {
                 let payload = &mut ip_packet.into_inner()[header.buffer_len()..];
                 payload.copy_from_slice(&data[..])
             }
-
-            &Repr::__Nonexhaustive => unreachable!()
         }
 
         if checksum_caps.icmpv4.tx() {
@@ -516,22 +512,21 @@ impl<'a, T: AsRef<[u8]> + ?Sized> fmt::Display for Packet<&'a T> {
 
 impl<'a> fmt::Display for Repr<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &Repr::EchoRequest { ident, seq_no, data } =>
-                write!(f, "ICMPv4 echo request id={} seq={} len={}",
-                       ident, seq_no, data.len()),
-            &Repr::EchoReply { ident, seq_no, data } =>
-                write!(f, "ICMPv4 echo reply id={} seq={} len={}",
-                       ident, seq_no, data.len()),
-            &Repr::DstUnreachable { reason, .. } =>
-                write!(f, "ICMPv4 destination unreachable ({})",
-                       reason),
-            &Repr::__Nonexhaustive => unreachable!()
+        match *self {
+            Repr::EchoRequest { ident, seq_no, data } =>
+               write!(f, "ICMPv4 echo request id={} seq={} len={}",
+                      ident, seq_no, data.len()),
+            Repr::EchoReply { ident, seq_no, data } =>
+               write!(f, "ICMPv4 echo reply id={} seq={} len={}",
+                      ident, seq_no, data.len()),
+            Repr::DstUnreachable { reason, .. } =>
+               write!(f, "ICMPv4 destination unreachable ({})",
+                      reason),
         }
     }
 }
 
-use super::pretty_print::{PrettyPrint, PrettyIndent};
+use crate::wire::pretty_print::{PrettyPrint, PrettyIndent};
 
 impl<T: AsRef<[u8]>> PrettyPrint for Packet<T> {
     fn pretty_print(buffer: &dyn AsRef<[u8]>, f: &mut fmt::Formatter,

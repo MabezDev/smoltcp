@@ -1,9 +1,4 @@
-#[macro_use]
-extern crate log;
-extern crate env_logger;
-extern crate getopts;
-extern crate smoltcp;
-
+#![allow(clippy::option_map_unit_fn)]
 mod utils;
 
 use std::collections::BTreeMap;
@@ -63,10 +58,10 @@ fn main() {
             });
         config.map(|config| {
             println!("DHCP config: {:?}", config);
-            match config.address {
-                Some(cidr) => if cidr != prev_cidr {
+            if let Some(cidr) = config.address {
+                if cidr != prev_cidr {
                     iface.update_ip_addrs(|addrs| {
-                        addrs.iter_mut().nth(0)
+                        addrs.iter_mut().next()
                             .map(|addr| {
                                 *addr = IpCidr::Ipv4(cidr);
                             });
@@ -74,11 +69,10 @@ fn main() {
                     prev_cidr = cidr;
                     println!("Assigned a new IPv4 address: {}", cidr);
                 }
-                _ => {}
             }
 
             config.router.map(|router| iface.routes_mut()
-                              .add_default_ipv4_route(router.into())
+                              .add_default_ipv4_route(router)
                               .unwrap()
             );
             iface.routes_mut()
@@ -101,6 +95,6 @@ fn main() {
         iface.poll_delay(&sockets, timestamp)
             .map(|sockets_timeout| timeout = sockets_timeout);
         phy_wait(fd, Some(timeout))
-            .unwrap_or_else(|e| println!("Wait: {:?}", e));;
+            .unwrap_or_else(|e| println!("Wait: {:?}", e));
     }
 }
