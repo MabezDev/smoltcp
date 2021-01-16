@@ -1072,15 +1072,16 @@ impl<'b, 'c, 'e> InterfaceInner<'b, 'c, 'e> {
     }
 
     /// Checks if an incoming packet has a broadcast address for the interfaces
-    /// first ip address
+    /// associated ipv4 addresses.
+    #[cfg(feature = "proto-ipv4")]
     fn is_subnet_broadcast(&self, address: IpAddress) -> bool {
         match address {
-            #[cfg(feature = "proto-ipv4")]
             IpAddress::Ipv4(addr) => {
                 self.ip_addrs.iter()
                     .filter_map(|own_cidr| match own_cidr {
                         IpCidr::Ipv4(own_ip) => Some(own_ip.broadcast()?),
-                        _ => None
+                        #[cfg(feature = "proto-ipv6")]
+                        IpCidr::Ipv6(_) => None
                     })
                     .any(|broadcast_address| addr == broadcast_address)
             },
@@ -1716,9 +1717,9 @@ mod test {
     #[cfg(feature = "proto-ipv4")]
     use crate::wire::{ArpOperation, ArpPacket, ArpRepr};
     use crate::wire::{EthernetAddress, EthernetFrame, EthernetProtocol};
-    use crate::wire::{IpAddress, IpCidr, IpProtocol, IpRepr, Ipv4Cidr};
+    use crate::wire::{IpAddress, IpCidr, IpProtocol, IpRepr};
     #[cfg(feature = "proto-ipv4")]
-    use crate::wire::{Ipv4Address, Ipv4Repr};
+    use crate::wire::{Ipv4Address, Ipv4Repr, Ipv4Cidr};
     #[cfg(feature = "proto-igmp")]
     use crate::wire::Ipv4Packet;
     #[cfg(feature = "proto-ipv4")]
@@ -1899,6 +1900,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "proto-ipv4")]
     fn test_local_subnet_broadcasts() {
         let (mut iface, _) = create_loopback();
         iface.update_ip_addrs(|addrs| {
